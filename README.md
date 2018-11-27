@@ -18,11 +18,11 @@ Everyone pull the master branch from this repo (by adding a second remote in git
 ## You have 4 tasks to complete in this library:
 1. Implement a _frequency smoothing filter_, this can be done by using a running_mean with window N like
 
-{% highlight python %}
+```python
 def running_mean(x, N):
     cumsum = numpy.cumsum(numpy.insert(x, 0, 0)) 
     return (cumsum[N:] - cumsum[:-N]) / float(N)
-{% endhighlight %}
+```
 
 For more info on this, look at [Moving average](https://en.wikipedia.org/wiki/Moving_average)
 
