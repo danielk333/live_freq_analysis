@@ -12,8 +12,9 @@ T_s = 1.0/float(fs)
 
 window = 2000
 window_T = window*T_s
+overlap = int(window/2) #this is the step the window moves by in the FFT analysis
 
-integ_range = list(range(0, data.shape[0], window))
+integ_range = list(range(0, data.shape[0]-window, overlap))
 #remove last elements just for safty
 del integ_range[-1]
 
