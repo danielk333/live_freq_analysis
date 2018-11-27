@@ -18,7 +18,8 @@ And remember, if you find this task enjoyable, feel free to keep submitting merg
 When tasks 1-3 are done and integrated:
 Everyone pull the master branch from this repo (by adding a second remote in git) and implement task 5 locally
 
-## You have 5 tasks to complete in this library:
+## There are 5 tasks to complete in this library:
+Remember that you are not doing ALL tasks yourself, only task 5.
 
 Note about the *filter* functions below: you can choose to implement so that they work on a single fourier transform (i.e. 1 set of frequency and amplitude) or a whole set of fourier transformes (like the sliding windowed fourier transforms done in the script), both are OK!
 
