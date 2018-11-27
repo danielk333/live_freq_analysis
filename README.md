@@ -21,15 +21,29 @@ Everyone pull the master branch from this repo (by adding a second remote in git
 
 ```python
 def running_mean(x, N):
-    cumsum = numpy.cumsum(numpy.insert(x, 0, 0)) 
+    cumsum = n.cumsum(n.insert(x, 0, 0)) 
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 ```
 
 For more info on this, look at [Moving average](https://en.wikipedia.org/wiki/Moving_average)
 
 2. implement a _frequency band pass_, i.e. all frequencies outside f1 and f2 are set to 0
-3. Implement data read and a data write functions (using scipy wav) and replace the hardcoded data read by this function
-4. Implement testing using pytest
+3. Implement a _frequency gaussian filter_, i.e. multiply all values with a gausian with some mean (f_mu) and standard deviation (f_std) in frequency space
+4. Change the windowed frequency extraction part of the script into a function and implement testing using pytest, suggested tests can be:
+
+```python
+def test_freq_sin(x, N):
+    t = n.linspace(0,1,num=10000,dtype=n.float)
+    f0 = 3000 %Hz
+
+    wav_data = n.sin(n.pi*2.0*f0*t)
+
+    freq_content = THE_FUNCTION_THAT_EXTRACTS_FREQUENCY_STUFF(...)
+
+    assert n.abs(freq_content/(2,0*n.pi) - f0) < 100 
+```
+And to extend the test even further one could try inputting a linearly sliding frequency f0(t) and look that it actually reporuces the correct curve
+
 5. Use the _frequency smoothing filter_ and _frequency band pass_ and load functions to: load the *test.wav*, fourier transform, smooth the data, bandpass the data at some frequency range, inverse transform the data, and save the data into a new wav file
 
 ## Bonus tasks
