@@ -23,6 +23,23 @@ data_ampl = []
 data_freq = []
 data_db = []
 
+def running_mean(x, N):
+    cumsum = n.cumsum(n.insert(x, 0, 0)) 
+    cmsum = n.zeros(len(x))
+    cumsum = (cumsum[N:] - cumsum[:-N]) / float(N)
+    for i in range(len(cumsum)):
+        cmsum[i] = cumsum[i]
+    for i in range(0,N):
+        cmsum[N+i] = (cumsum[N+i] - cumsum[-(N+i)]) / float(N-i)
+    return cmsum
+	
+def band_pass(xmin, xmax,j):
+    for i,data in enumerate(data_freq[j]):
+        if data <= xmin or data >= xmax:
+            data_db[j][i]=0
+    return data_db
+
+
 for i in integ_range:
     sub_data = data[i:(i+window),0]
 
