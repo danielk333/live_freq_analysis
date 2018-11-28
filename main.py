@@ -50,6 +50,10 @@ for i in integ_range:
     data_ampl.append( tmp_ampl[pos] ) 
     data_freq.append( tmp_freq[pos] )
     data_db.append( 10.0*n.log10(n.abs(tmp_ampl[pos])) )
+	
+    data_db = band_pass(500,2000,-1)
+    data_db[-1] = running_mean(data_db[-1],10)
+	
     
 #generate animatioon
 def update_text(i):
