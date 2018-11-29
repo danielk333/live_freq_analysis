@@ -32,7 +32,7 @@ def running_mean(x, N):
     for i in range(0,N):
         cmsum[N+i] = (cumsum[N+i] - cumsum[-(N+i)]) / float(N-i)
     return cmsum
-	
+    
 def band_pass(x,y,xmin, xmax):
     for i,data in enumerate(y):
         if data <= xmin or data >= xmax:
@@ -48,13 +48,13 @@ for i in integ_range:
     pos = tmp_freq > 0
 
     data_ampl.append( tmp_ampl[pos] ) 
-	
+
     data_ampl[-1] = running_mean(data_ampl[-1],10)
-	
+
     data_freq.append( tmp_freq[pos] )
-	
+
     data_ampl[-1] = band_pass(data_ampl[-1],data_freq[-1],500,2000)
-	
+
     data_db.append(10.0*n.log10(n.abs(data_ampl[-1])))
 	
 	
