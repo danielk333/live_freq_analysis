@@ -25,7 +25,7 @@ data_db = []
 
 def running_mean(x, N):
     cumsum = n.cumsum(n.insert(x, 0, 0)) 
-    cmsum = n.zeros(len(x))
+    cmsum = n.zeros(len(x),dtype = x.dtype)
     cumsum = (cumsum[N:] - cumsum[:-N]) / float(N)
     for i in range(len(cumsum)):
         cmsum[i] = cumsum[i]
@@ -33,11 +33,11 @@ def running_mean(x, N):
         cmsum[N+i] = (cumsum[N+i] - cumsum[-(N+i)]) / float(N-i)
     return cmsum
 	
-def band_pass(xmin, xmax,j):
-    for i,data in enumerate(data_freq[j]):
+def band_pass(x,y,xmin, xmax):
+    for i,data in enumerate(y):
         if data <= xmin or data >= xmax:
-            data_db[j][i]=0
-    return data_db
+            x[i]=0
+    return x
 
 
 for i in integ_range:
@@ -48,11 +48,15 @@ for i in integ_range:
     pos = tmp_freq > 0
 
     data_ampl.append( tmp_ampl[pos] ) 
-    data_freq.append( tmp_freq[pos] )
-    data_db.append( 10.0*n.log10(n.abs(tmp_ampl[pos])) )
 	
-    data_db = band_pass(500,2000,-1)
-    data_db[-1] = running_mean(data_db[-1],10)
+    data_ampl[-1] = running_mean(data_ampl[-1],10)
+	
+    data_freq.append( tmp_freq[pos] )
+	
+    data_ampl[-1] = band_pass(data_ampl[-1],data_freq[-1],500,2000)
+	
+    data_db.append(10.0*n.log10(n.abs(data_ampl[-1])))
+	
 	
     
 #generate animatioon
