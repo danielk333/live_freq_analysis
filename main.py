@@ -39,6 +39,11 @@ def band_pass(x,y,xmin, xmax):
             x[i]=0
     return x
 
+def gaussian_filter(ampl_data, freq_data, f_mu, f_std):
+    filtering = n.exp(-0.5*((freq_data-f_mu)/f_std)**2)
+    ampl_data = ampl_data*filtering
+    return ampl_data
+
 
 for i in integ_range:
     sub_data = data[i:(i+window),0]
