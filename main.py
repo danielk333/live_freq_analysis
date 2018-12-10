@@ -1,12 +1,34 @@
+
+import time
+import unittest
+
 from scipy.io import wavfile
 from scipy.fftpack import fft
 from scipy.fftpack import fftfreq
 from matplotlib.animation import FuncAnimation
 import numpy as n
 import matplotlib.pyplot as plt
-import time
-import unittest
 
+def running_mean(x, N):
+    cumsum = n.cumsum(n.insert(x, 0, 0)) 
+    cmsum = n.zeros(len(x),dtype = x.dtype)
+    cumsum = (cumsum[N:] - cumsum[:-N]) / float(N)
+    for i in range(len(cumsum)):
+        cmsum[i] = cumsum[i]
+    for i in range(0,N):
+        cmsum[N+i] = (cumsum[N+i] - cumsum[-(N+i)]) / float(N-i)
+    return cmsum
+    
+def band_pass(x, y, xmin, xmax):
+    for i,data in enumerate(x):
+        if data <= xmin or data >= xmax:
+            y[i]=0
+    return y
+
+def gaussian_filter(ampl_data, freq_data, f_mu, f_std):
+    filtering = n.exp(-0.5*((freq_data-f_mu)/f_std)**2)
+    ampl_data = ampl_data*filtering
+    return ampl_data
 
 class MyTests(unittest.TestCase):
     def test_freq_sin(x):
@@ -29,7 +51,7 @@ def THE_FUNCTION_THAT_EXTRACTS_FREQUENCY_STUFF(wav_data, T_s, window, overlap):
         integ_range = list(range(0, wav_data.shape[0] - window, overlap))
         del integ_range[-1]
     else:
-        integ_range = [0]
+        integ_range = list(range(0, wav_data.shape[0] - window, window))
 
     # generate time dependant specturm
     data_ampl = []
