@@ -1,6 +1,20 @@
 Practical task
 ==============
 
+# The fun part:
+Now that everyone has contrubuted their code: we can play with the filters! I have implemented a small function that converts the modified data to a wav file again. In this repo you now find 3 different soundfiles created by applying different filters.
+Feel free to add this repo as a remote and pull the changes and try it yourselfs!
+
+```bash
+git remote add upstream git@github.com:danielk333/live_freq_analysis.git
+git fetch upstream master
+git checkout master
+git merge upstream/master
+```
+
+Also to keep working with this it is a good idea to have this as a reference:
+[WaveFormat](http://soundfile.sapp.org/doc/WaveFormat/)
+
 ## The code: main.py
 Open the file and look at the code, it loads some wav sound file, extracts the data, fourier transform it in a windowed fashion and plots a animation of the frequency content of the sound file as a function of time! Also open the sound file and listen to it (yes its me whistling :P).
 

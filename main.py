@@ -2,12 +2,11 @@
 import time
 import unittest
 
-from scipy.io import wavfile
-from scipy.fftpack import fft
-from scipy.fftpack import fftfreq
-from matplotlib.animation import FuncAnimation
 import numpy as n
+from scipy.io import wavfile
+from scipy.fftpack import fft, ifft, fftfreq
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 def running_mean(x, N):
     cumsum = n.cumsum(n.insert(x, 0, 0)) 
@@ -19,7 +18,7 @@ def running_mean(x, N):
         cmsum[N+i] = (cumsum[N+i] - cumsum[-(N+i)]) / float(N-i)
     return cmsum
     
-def band_pass(x, y, xmin, xmax):
+def band_pass(y, x, xmin, xmax):
     for i,data in enumerate(x):
         if data <= xmin or data >= xmax:
             y[i]=0
@@ -46,12 +45,16 @@ class MyTests(unittest.TestCase):
 def THE_FUNCTION_THAT_EXTRACTS_FREQUENCY_STUFF(wav_data, T_s, window, overlap):
     print(wav_data.shape, window, overlap)
 
-    # remove last elements just for safty
+    if window > wav_data.shape[0]:
+        window = wav_data.shape[0]
+
     if overlap > 0:
         integ_range = list(range(0, wav_data.shape[0] - window, overlap))
-        del integ_range[-1]
     else:
         integ_range = list(range(0, wav_data.shape[0] - window, window))
+    
+    if len(integ_range) == 0:
+        integ_range = [0]
 
     # generate time dependant specturm
     data_ampl = []
@@ -64,16 +67,49 @@ def THE_FUNCTION_THAT_EXTRACTS_FREQUENCY_STUFF(wav_data, T_s, window, overlap):
         tmp_freq = fftfreq(sub_data.size, d=T_s)
         pos = tmp_freq > 0
 
-        data_ampl.append(tmp_ampl[pos])
-        data_freq.append(tmp_freq[pos])
-        data_db.append(10.0 * n.log10(n.abs(tmp_ampl[pos])))
+        data_ampl.append(tmp_ampl)
+        data_freq.append(tmp_freq)
+        data_db.append(10.0 * n.log10(n.abs(tmp_ampl)))
 
     return n.array(data_ampl), n.array(data_freq), n.array(data_db), n.array(integ_range)
 
+def run_fft2wave(data_ampl, integ_range, window, rate, filename, bit_num = 1, volume = 1.0):
+    data = n.empty((max(integ_range) + window, 1), dtype=n.int16)
 
-def main():
-    fs, data = wavfile.read('./test.wav')
+    for i, data_ch in zip(integ_range, data_ampl):
+        tmp_data = n.real(ifft(data_ch))
+        tmp_data = n.int16(tmp_data*(bit_num+1)*volume)
+        data[i:(i + window), 0] = tmp_data
+
+    wavfile.write(filename, rate, data)
+
+def frequency_shift(ampl_data, freq_data, shift):
+    #assume linear freq data space
+    num = freq_data.size
+    dfreq = (n.max(freq_data) - n.min(freq_data))/float(num)
+
+    if shift < 0:
+        shift_num = int((-shift)//dfreq)+1
+        n.copyto(ampl_data[:-shift_num], ampl_data[shift_num:])
+        #ampl_data[-shift_num:] = 0.0
+    else:
+        shift_num = int(shift//dfreq)+1
+        n.copyto(ampl_data[shift_num:], ampl_data[:-shift_num])
+        #ampl_data[:shift_num] = 0.0
+
+    return ampl_data
+
+def main(plot=False):
+    fs, data_raw = wavfile.read('./test.wav')
     T_s = 1.0 / float(fs)
+
+    if data_raw.dtype == 'int16':
+        nb_bits = 16 # -> 16-bit wav files
+    elif data_raw.dtype == 'int32':
+        nb_bits = 32 # -> 32-bit wav files
+    max_nb_bit = float(2 ** (nb_bits - 1))
+    data = n.float64(data_raw.copy())
+    data = data / (max_nb_bit + 1.0)
 
     window = 2000
     window_T = window * T_s
@@ -81,34 +117,52 @@ def main():
 
     data_ampl, data_freq, data_db, integ_range = THE_FUNCTION_THAT_EXTRACTS_FREQUENCY_STUFF(wav_data=data[:, 0], T_s=T_s, window=window, overlap=overlap)
 
-    # generate animatioon
-    def update_text(i):
-        return 't={:.4f} s'.format(integ_range[i] * T_s)
+    #this runs filter on the data
 
-    fig, ax = plt.subplots()
-    ln, = ax.plot([], [])
-    titl = fig.text(0.5, 0.94, update_text(0), size=22, horizontalalignment='center')
+    #gaussian
+    for ind in range(data_ampl.shape[0]):
+        data_ampl[ind,:] = gaussian_filter(data_ampl[ind,:], data_freq[ind,:], 1000, 300)
+    #Bandpass
+    #for ind in range(data_ampl.shape[0]):
+        #data_ampl[ind,:] = band_pass(data_ampl[ind,:], data_freq[ind,:], 300, 700)
+    #shift down
+    for ind in range(data_ampl.shape[0]):
+        data_ampl[ind,:] = frequency_shift(data_ampl[ind,:], data_freq[ind,:], -400.0)
 
-    def init():
-        ax.set_xlim(0, 5000)
-        ax.set_ylim(20, 100)
-        return ln,
+    
 
-    def update(i):
-        t0 = time.time()
-        titl.set_text(update_text(i))
-        ln.set_data(data_freq[i], data_db[i])
-        time.sleep(window_T)
-        while time.time() - t0 < window_T:
-            time.sleep(0.001)
-        return ln,
+    #this saves to wav file
+    run_fft2wave(data_ampl, integ_range, window, fs, 'modified_gbp_shifted.wav', bit_num = max_nb_bit, volume = 0.25)
 
-    ani = FuncAnimation(fig, update, frames=range(len(integ_range)),
-                        init_func=init)
+    if plot:
+        # generate animatioon
+        def update_text(i):
+            return 't={:.4f} s'.format(integ_range[i] * T_s)
 
-    plt.show()
+        fig, ax = plt.subplots()
+        ln, = ax.plot([], [])
+        titl = fig.text(0.5, 0.94, update_text(0), size=22, horizontalalignment='center')
+
+        def init():
+            ax.set_xlim(0, 2000)
+            ax.set_ylim(20, 100)
+            return ln,
+
+        def update(i):
+            t0 = time.time()
+            titl.set_text(update_text(i))
+            ln.set_data(data_freq[i,:], 10.0 * n.log10(n.abs(data_ampl[i,:]*(max_nb_bit + 1.0))))
+            time.sleep(window_T)
+            while time.time() - t0 < window_T:
+                time.sleep(0.001)
+            return ln,
+
+        ani = FuncAnimation(fig, update, frames=range(len(integ_range)),
+                            init_func=init)
+
+        plt.show()
 
 
 if __name__ == '__main__':
-    # main()
-    unittest.main()
+    main(plot=False)
+    #unittest.main()
