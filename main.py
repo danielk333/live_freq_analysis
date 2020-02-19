@@ -6,6 +6,13 @@ import numpy as n
 import matplotlib.pyplot as plt
 import time
 
+
+def running_mean(x, N): #added by Angele
+    l = len(x)
+    new_x = [n.sum(x[i:i+N])/N for i in range(l-N)] \
+            + [n.sum(x[l-N+i:l-1])/(N-i-1) for i in range(N-1)] + [x[l-1]]
+    return new_x
+    
 fs, data = wavfile.read('./test.wav')
 
 T_s = 1.0/float(fs)
@@ -32,7 +39,7 @@ for i in integ_range:
 
     data_ampl.append( tmp_ampl[pos] ) 
     data_freq.append( tmp_freq[pos] )
-    data_db.append( 10.0*n.log10(n.abs(tmp_ampl[pos])) )
+    data_db.append(running_mean(10.0*n.log10(n.abs(tmp_ampl[pos])),10)) #edited by Angele
     
 #generate animatioon
 def update_text(i):
