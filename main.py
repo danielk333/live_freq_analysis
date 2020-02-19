@@ -24,10 +24,21 @@ def band_pass(y, x, xmin, xmax):
             y[i]=0
     return y
 
+
+
+def running_mean(x, N): #added by Angele
+    l = len(x)
+    new_x = [n.sum(x[i:i+N])/N for i in range(l-N)] \
+            + [n.sum(x[l-N+i:l-1])/(N-i-1) for i in range(N-1)] + [x[l-1]]
+    return new_x
+    
+fs, data = wavfile.read('./test.wav')
+
 def gaussian_filter(ampl_data, freq_data, f_mu, f_std):
     filtering = n.exp(-0.5*((freq_data-f_mu)/f_std)**2)
     ampl_data = ampl_data*filtering
     return ampl_data
+
 
 class MyTests(unittest.TestCase):
     def test_freq_sin(x):
@@ -48,10 +59,16 @@ def THE_FUNCTION_THAT_EXTRACTS_FREQUENCY_STUFF(wav_data, T_s, window, overlap):
     if window > wav_data.shape[0]:
         window = wav_data.shape[0]
 
+
+    data_ampl.append( tmp_ampl[pos] ) 
+    data_freq.append( tmp_freq[pos] )
+    data_db.append(running_mean(10.0*n.log10(n.abs(tmp_ampl[pos])),10)) #edited by Angele
+
     if overlap > 0:
         integ_range = list(range(0, wav_data.shape[0] - window, overlap))
     else:
         integ_range = list(range(0, wav_data.shape[0] - window, window))
+
     
     if len(integ_range) == 0:
         integ_range = [0]
